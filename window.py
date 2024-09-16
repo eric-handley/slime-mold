@@ -1,40 +1,53 @@
+from typing import List
+import numpy as np
 import pygame
 import sys
-from random import randint
-import numpy as np
+from random import randint, choice
 from blur import blur
+from particle_compute import compute_particle_pos
+from screen import Screen
 
 pygame.init()
-windowx = 1500
-windowy = 800
-window_size = (windowx, windowy)
-screen = pygame.display.set_mode(size=window_size)
+screen = pygame.display.set_mode(size=Screen.window_size)
 pygame.display.set_caption("Pygame Window")
-surface = pygame.Surface(window_size)
+surface = pygame.Surface(Screen.window_size)
 surface.fill((0, 0, 0))
-screen.blit(surface, (0, 0))
 
-def blur_pixels():
-    pxs = pygame.surfarray.array3d(surface)
-    blurred_pxs = blur(pxs)
-    pygame.surfarray.blit_array(surface, blurred_pxs)
+def gen_particles(n: int) -> List[List[int]]:
+    return [
+        [randint(0, Screen.windowx - 1), randint(0, Screen.windowy - 1), choice([-1, 1]), choice([-1, 1])]
+        for i in range(0, n)
+    ]
+
+particles = np.array(gen_particles(100))
+clock = pygame.time.Clock()
 
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+    
+    for i in range(0, 3):
+        particles = compute_particle_pos(particles)
 
-    blur_pixels()
+        # Create a temporary surface for particle drawing
+        temp_surface = pygame.Surface(Screen.window_size, pygame.SRCALPHA)
+        
+        if i:
+            # Blur the surface pixels
+            surface_array = pygame.surfarray.array3d(surface)
+            blurred_pixels = blur(surface_array)
+            pygame.surfarray.blit_array(surface, blurred_pixels)
 
-    # Create random circles for testing
-    for i in range(1, 2):
-        r, g, b = randint(0, 255), randint(0, 255), randint(0, 255)
-        color = (r << 16) + (g << 8) + b
-        center = (randint(0, windowx - 1), randint(0, windowy - 1))
-        radius = randint(1, 50)
+        # Draw particles on temporary surface
+        for p in particles:
+            x, y = int(round(p[0])), int(round(p[1]))
+            temp_surface.set_at((x, y), (255, 255, 255)) # TODO fix this to update all particles as once, for some reason this is needlessly hard to do while still having blur
 
-        pygame.draw.circle(surface, color, center, radius)
+        # Blit temporary surface to main surface
+        surface.blit(temp_surface, (0, 0))
 
-    screen.blit(surface, (0, 0))
-    pygame.display.flip()
+        # Blit the blurred surface to the screen
+        screen.blit(surface, (0, 0))
+        pygame.display.update()
