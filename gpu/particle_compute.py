@@ -1,9 +1,7 @@
 import math
-from random import uniform
 import numpy as np
 from numba import cuda
 from numba.cuda import random
-import pygame
 from settings import Settings
 
 windowx = Settings.WINDOWX
