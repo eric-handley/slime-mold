@@ -4,7 +4,6 @@ from numba import cuda
 @cuda.jit
 def blur_kernel(arr, out):
     # Simple box blur
-
     x, y = cuda.grid(2)
 
     if x >= arr.shape[0] or y >= arr.shape[1]:

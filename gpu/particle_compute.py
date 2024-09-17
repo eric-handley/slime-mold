@@ -19,6 +19,7 @@ def generate_pixel_offsets(radius):
                 offsets.append((x, y))
     return offsets
 
+# CUDA functions can't access Settings directly
 SAMP_ANGLE = Settings.SAMPLE_ANGLE
 SAMP_POS_1 = Settings.SAMPLE_POSITION_1
 SAMP_POS_2 = Settings.SAMPLE_POSITION_2
@@ -148,12 +149,7 @@ def particle_pos_kernel(particles, screen, offsets, rng_states, out):
     p[2] = update_theta(p, screen, offsets, random_theta)
     px, py, theta = update_pos(p)
 
-    out[i, 0] = px
-    out[i, 1] = py
-    out[i, 2] = theta
-    out[i, 3] = r
-    out[i, 4] = g
-    out[i, 5] = b
+    out[i] = px, py, theta, r, g, b
 
 def compute_particle_pos(particles, screen_pixels):
     particles = np.array(particles)
