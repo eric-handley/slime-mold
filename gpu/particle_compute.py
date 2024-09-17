@@ -4,8 +4,6 @@ from numba import cuda
 from numba.cuda import random
 from settings import Settings
 
-windowx = Settings.WINDOWX
-windowy = Settings.WINDOWY
 
 # Generate a list of pixel offsets to sample
 # all pixels in a radius around a given x, y
@@ -18,6 +16,8 @@ def generate_pixel_offsets(radius):
     return offsets
 
 # CUDA functions can't access Settings directly
+SURFACEX = Settings.SURFACEX
+SURFACEY = Settings.SURFACEY
 SAMP_ANGLE = Settings.SAMPLE_ANGLE
 SAMP_POS_1 = Settings.SAMPLE_POSITION_1
 SAMP_POS_2 = Settings.SAMPLE_POSITION_2
@@ -37,7 +37,7 @@ ATTRACT_WEIGHT = Settings.ATTRACT_WEIGHT
 @cuda.jit
 def sum_sample_pixels(sx, sy, screen, offsets, rgb):
     sum = 0
-    r, g, b = rgb[0], rgb[1], rgb[2]
+    r, g, b = rgb
     c = max(r, g, b)
 
     for i in range(offsets.shape[0]):
@@ -45,7 +45,7 @@ def sum_sample_pixels(sx, sy, screen, offsets, rgb):
         spx = sx + x
         spy = sy + y
 
-        if spx > 0 and spy > 0 and spx < windowx and spy < windowy:
+        if spx > 0 and spy > 0 and spx < SURFACEX and spy < SURFACEY:
             sr, sg, sb = screen[int(spx), int(spy)]
             sc = max(sr, sg, sb)
             
@@ -59,7 +59,7 @@ def sum_sample_pixels(sx, sy, screen, offsets, rgb):
 
 @cuda.jit
 def update_theta(p, screen, offsets, random_theta):
-    px, py, theta, r, g, b = p[0], p[1], p[2], p[3], p[4], p[5]
+    px, py, theta, r, g, b = p
     
     # Sample three points in front of particle
     sx1 = px + math.cos(theta + SAMP_POS_1) * SAMP_DIST
@@ -108,8 +108,8 @@ def update_pos(p):
         px = 0
         pvx = abs(pvx)
         bounced = True
-    elif nx >= windowx:
-        px = windowx - 1
+    elif nx >= SURFACEX:
+        px = SURFACEX - 1
         pvx = -abs(pvx)
         bounced = True
     else:
@@ -119,8 +119,8 @@ def update_pos(p):
         py = 0
         pvy = abs(pvy)
         bounced = True
-    elif ny >= windowy:
-        py = windowy - 1
+    elif ny >= SURFACEY:
+        py = SURFACEY - 1
         pvy = -abs(pvy)
         bounced = True
     else:

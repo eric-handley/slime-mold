@@ -14,7 +14,7 @@ else:
     screen = pygame.display.set_mode(Settings.WINDOW_SIZE)
 
 pygame.display.set_caption("Window")
-surface = pygame.Surface(Settings.WINDOW_SIZE)
+surface = pygame.Surface(Settings.SURFACE_SIZE)
 surface.fill((0, 0, 0))
 
 def gen_particles(n):
@@ -30,9 +30,9 @@ def gen_particles(n):
     for s in species:
         particles += [
             [
-                randint(0, Settings.WINDOWX - 1), # px
-                randint(0, Settings.WINDOWY - 1), # py
-                uniform(-1, 1) * np.pi,           # theta
+                randint(0, Settings.SURFACEX - 1), # px
+                randint(0, Settings.SURFACEY - 1), # py
+                uniform(-1, 1) * np.pi,            # theta
                 s[0], # r
                 s[1], # g
                 s[2] # b
@@ -61,5 +61,6 @@ while True:
     blurred_array = blur(surface_array)
 
     pygame.surfarray.blit_array(surface, blurred_array)
-    screen.blit(surface, (0, 0))
+    scaled_surface = pygame.transform.smoothscale(surface, Settings.WINDOW_SIZE)
+    screen.blit(scaled_surface, (0, 0))
     pygame.display.update()

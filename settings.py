@@ -1,7 +1,7 @@
 import math
 
 class Settings:
-    AGENTS = 10000
+    AGENTS = 50000
 
     RED = True
     GREEN = False
@@ -30,5 +30,9 @@ class Settings:
     WINDOWX = 1000
     WINDOWY = 900
     WINDOW_SIZE = (WINDOWX, WINDOWY)
+
+    SURFACEX = round(WINDOWX * 2)
+    SURFACEY = round(WINDOWY * 2)
+    SURFACE_SIZE = (SURFACEX, SURFACEY)
 
     FULLSCREEN = False
