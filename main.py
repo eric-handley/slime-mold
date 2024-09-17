@@ -18,16 +18,28 @@ surface = pygame.Surface(Settings.WINDOW_SIZE)
 surface.fill((0, 0, 0))
 
 def gen_particles(n):
-    return [
-        [
-            randint(0, Settings.WINDOWX - 1), # px
-            randint(0, Settings.WINDOWY - 1), # py
-            uniform(-1, 1) * np.pi,           # theta
-            (255 if i % 3 == 0 and Settings.RED   else 0), # r
-            (255 if i % 3 == 1 and Settings.GREEN else 0), # g
-            (255 if i % 3 == 2 and Settings.BLUE  else 0)  # b
-        ] for i in range(0, n)
-    ]
+    species = []
+
+    if Settings.RED:   species.append((255, 0, 0))
+    if Settings.GREEN: species.append((0, 255, 0))
+    if Settings.BLUE:  species.append((0, 0, 255))
+
+    particles_per_species = round(Settings.AGENTS / len(species)) 
+    particles = []
+
+    for s in species:
+        particles += [
+            [
+                randint(0, Settings.WINDOWX - 1), # px
+                randint(0, Settings.WINDOWY - 1), # py
+                uniform(-1, 1) * np.pi,           # theta
+                s[0], # r
+                s[1], # g
+                s[2] # b
+            ] for _ in range(0, particles_per_species)
+        ]
+
+    return particles
 
 particles = np.array(gen_particles(Settings.AGENTS))
 

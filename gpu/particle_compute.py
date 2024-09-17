@@ -164,7 +164,7 @@ def compute_particle_pos(particles, screen_pixels):
     screen_pixels_device = cuda.to_device(screen_pixels)
     offsets_device = cuda.to_device(SAMP_OFFSETS)
 
-    threads_per_block = 16
+    threads_per_block = 32
     blocks = int(np.ceil(particles.shape[0] / threads_per_block))
 
     # RNG states to turn each particle by a small random amount each frame

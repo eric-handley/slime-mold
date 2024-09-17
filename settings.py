@@ -4,8 +4,8 @@ class Settings:
     AGENTS = 10000
 
     RED = True
-    GREEN = True
-    BLUE = False
+    GREEN = False
+    BLUE = True
 
     SAMPLE_ANGLE = math.pi / 3
 
