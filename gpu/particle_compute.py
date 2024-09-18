@@ -19,17 +19,15 @@ def generate_pixel_offsets(radius):
 SURFACEX = Settings.SURFACEX
 SURFACEY = Settings.SURFACEY
 SAMP_ANGLE = Settings.SAMPLE_ANGLE
-SAMP_POS_1 = Settings.SAMPLE_POSITION_1
-SAMP_POS_2 = Settings.SAMPLE_POSITION_2
-SAMP_POS_3 = Settings.SAMPLE_POSITION_3
+SAMP_POS_LEFT = -1 * SAMP_ANGLE
+SAMP_POS_RIGHT = SAMP_ANGLE
 SAMP_DIST = Settings.SAMPLE_DISTANCE
 SAMP_RAD = Settings.SAMPLE_RADIUS
 SAMP_OFFSETS = generate_pixel_offsets(SAMP_RAD)
 VELOCITY = Settings.VELOCITY
 COHESION = Settings.COHESION
-TURN_WEIGHT_1 = Settings.TURN_WEIGHT_1
-TURN_WEIGHT_2 = Settings.TURN_WEIGHT_2
-TURN_WEIGHT_3 = Settings.TURN_WEIGHT_3
+TURN_WEIGHT_LEFT = Settings.TURN_WEIGHT_LEFT
+TURN_WEIGHT_RIGHT = Settings.TURN_WEIGHT_RIGHT
 TURN_RANDOMNESS = Settings.TURN_RANDOMNESS
 AVOID_WEIGHT = Settings.AVOID_WEIGHT
 ATTRACT_WEIGHT = Settings.ATTRACT_WEIGHT
@@ -53,42 +51,56 @@ def sum_sample_pixels(sx, sy, screen, offsets, rgb):
             if (sc == sr and c == r) or (sc == sb and c == b) or (sc == sg and c == g):
                 sum += ATTRACT_WEIGHT
             if (sc == sr and c != r) or (sc == sb and c != b) or (sc == sg and c != g):
-                sum -= AVOID_WEIGHT
+                sum += AVOID_WEIGHT
     
     return sum
 
 @cuda.jit
 def update_theta(p, screen, offsets, random_theta):
     px, py, theta, r, g, b = p
-    
+
     # Sample three points in front of particle
-    sx1 = px + math.cos(theta + SAMP_POS_1) * SAMP_DIST
-    sy1 = py + math.sin(theta + SAMP_POS_1) * SAMP_DIST
+    sx1 = px + math.cos(theta + SAMP_POS_LEFT) * SAMP_DIST
+    sy1 = py + math.sin(theta + SAMP_POS_LEFT) * SAMP_DIST
+
+    sx2 = px + math.cos(theta) * SAMP_DIST
+    sy2 = py + math.sin(theta) * SAMP_DIST
+
+    sx3 = px + math.cos(theta + SAMP_POS_RIGHT) * SAMP_DIST
+    sy3 = py + math.sin(theta + SAMP_POS_RIGHT) * SAMP_DIST
+
     s1 = sum_sample_pixels(sx1, sy1, screen, offsets, (r,g,b))
-
-    sx2 = px + math.cos(theta + SAMP_POS_2) * SAMP_DIST
-    sy2 = py + math.sin(theta + SAMP_POS_2) * SAMP_DIST
     s2 = sum_sample_pixels(sx2, sy2, screen, offsets, (r,g,b))
-
-    sx3 = px + math.cos(theta + SAMP_POS_3) * SAMP_DIST
-    sy3 = py + math.sin(theta + SAMP_POS_3) * SAMP_DIST
     s3 = sum_sample_pixels(sx3, sy3, screen, offsets, (r,g,b))
 
-    # Find highest weighted point
+    # # Find highest weighted point
     smax = max(s1, s2, s3)
 
     a, b = -TURN_RANDOMNESS, TURN_RANDOMNESS
     theta += a + (b - a) * random_theta
 
-    # Turn toward highest sampled area
-    if smax <= 0:
+    # Check for tie, otherwise we will bias turning left when samples are equal
+    if (smax == s1 and smax == s2) or (smax == s2 and smax == s3) or (smax == s1 and smax == s2):
         return theta
+
+    theta_left = theta + TURN_WEIGHT_LEFT
+    theta_right = theta + TURN_WEIGHT_RIGHT   
+
+    # Turn toward highest sampled area
     if s1 == smax:
-        return theta + TURN_WEIGHT_1
-    if s2 == smax:
-        return theta + TURN_WEIGHT_2
+        return theta_left
     if s3 == smax:
-        return theta + TURN_WEIGHT_3
+        return theta_right
+    
+    # # Don't go straight if weight for s2 < 0
+    # if s2 < 0:
+    #     if s1 > s3:
+    #         return theta_left
+    #     else:
+    #         return theta_right
+        
+    return theta
+
 
 @cuda.jit
 def update_pos(p):
@@ -104,7 +116,7 @@ def update_pos(p):
     bounced = False
     
     # Particle "bounces" if it reaches edge of screen
-    if nx < 0:
+    if nx < 1:
         px = 0
         pvx = abs(pvx)
         bounced = True
@@ -115,7 +127,7 @@ def update_pos(p):
     else:
         px = nx
     
-    if ny < 0:
+    if ny < 1:
         py = 0
         pvy = abs(pvy)
         bounced = True
