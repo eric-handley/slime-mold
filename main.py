@@ -11,9 +11,13 @@ pygame.init()
 if Settings.FULLSCREEN:
     screen = pygame.display.set_mode(Settings.WINDOW_SIZE, pygame.FULLSCREEN)
 else:
-    screen = pygame.display.set_mode(Settings.WINDOW_SIZE)
+    screen = pygame.display.set_mode(Settings.WINDOW_SIZE, pygame.NOFRAME)
 
-pygame.display.set_caption("Window")
+icon = pygame.Surface((32, 32))
+icon.set_colorkey((0, 0, 0))
+pygame.display.set_icon(icon)
+
+pygame.display.set_caption("Slime Mold Simulation")
 surface = pygame.Surface(Settings.SURFACE_SIZE)
 surface.fill((0, 0, 0))
 
