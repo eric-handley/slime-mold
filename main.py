@@ -20,9 +20,9 @@ surface.fill((0, 0, 0))
 def gen_particles(n):
     species = []
 
-    if Settings.RED:   species.append((255, 0, 0))
-    if Settings.GREEN: species.append((0, 255, 0))
-    if Settings.BLUE:  species.append((0, 0, 255))
+    if Settings.RED:   species.append((175, 0, 0))
+    if Settings.GREEN: species.append((0, 175, 0))
+    if Settings.BLUE:  species.append((0, 0, 175))
 
     particles_per_species = round(Settings.AGENTS / len(species)) 
     particles = []
@@ -35,7 +35,7 @@ def gen_particles(n):
                 uniform(-1, 1) * np.pi,            # theta
                 s[0], # r
                 s[1], # g
-                s[2] # b
+                s[2]  # b
             ] for _ in range(0, particles_per_species)
         ]
 
