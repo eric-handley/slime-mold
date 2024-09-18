@@ -1,7 +1,10 @@
+import os
 import numpy as np
-import pygame
 import sys
-from random import choice, randint, uniform
+from random import randint, uniform
+
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'True' # Suppress pygame welcome msg
+import pygame
 
 from gpu.blur import blur
 from gpu.particle_compute import compute_particle_pos

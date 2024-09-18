@@ -18,8 +18,8 @@ class Settings:
     ATTRACT_WEIGHT = uniform(-1, 1)
     AVOID_WEIGHT = uniform(-1, 1)
 
-    VELOCITY = uniform(0.5, 10)
-    COHESION = uniform(0.4, 2)
+    VELOCITY = uniform(0.1, 10)
+    COHESION = uniform(0.6, 2)
     TURN_RANDOMNESS = uniform(0.1, 0.6)
 
     TURN_WEIGHT_LEFT = (-1 * SAMPLE_ANGLE * COHESION)
