@@ -1,7 +1,7 @@
 import numpy as np
 import pygame
 import sys
-from random import randint, uniform
+from random import choice, randint, uniform
 
 from gpu.blur import blur
 from gpu.particle_compute import compute_particle_pos
@@ -24,14 +24,17 @@ surface.fill((0, 0, 0))
 def gen_particles(n):
     species = []
 
-    if Settings.RED:   species.append((175, 0, 0))
-    if Settings.GREEN: species.append((0, 175, 0))
-    if Settings.BLUE:  species.append((0, 0, 175))
+    if Settings.RED[0]:   species.append(Settings.RED[1])
+    if Settings.GREEN[0]: species.append(Settings.GREEN[1])
+    if Settings.BLUE[0]:  species.append(Settings.BLUE[1])
 
-    particles_per_species = round(Settings.AGENTS / len(species)) 
+    # Lazy but effective fix for when random generation chooses zero species
+    if len(species) == 0: species.append((randint(0, 255), randint(0, 255), randint(0, 255)))
+
+    particles_per_species = round(n / len(species)) 
     particles = []
-
-    for s in species:
+    
+    for s in species: 
         particles += [
             [
                 randint(0, Settings.SURFACEX - 1), # px
