@@ -4,7 +4,6 @@ from numba import cuda
 from numba.cuda import random
 from settings import Settings
 
-
 # Generate a list of pixel offsets to sample
 # all pixels in a radius around a given x, y
 def generate_pixel_offsets(radius):
@@ -15,25 +14,8 @@ def generate_pixel_offsets(radius):
                 offsets.append((x, y))
     return offsets
 
-# CUDA functions can't access Settings directly
-SURFACEX = Settings.SURFACEX
-SURFACEY = Settings.SURFACEY
-SAMP_ANGLE = Settings.SAMPLE_ANGLE
-SAMP_POS_LEFT = -1 * SAMP_ANGLE
-SAMP_POS_RIGHT = SAMP_ANGLE
-SAMP_DIST = Settings.SAMPLE_DISTANCE
-SAMP_RAD = Settings.SAMPLE_RADIUS
-SAMP_OFFSETS = generate_pixel_offsets(SAMP_RAD)
-VELOCITY = Settings.VELOCITY
-COHESION = Settings.COHESION
-TURN_WEIGHT_LEFT = Settings.TURN_WEIGHT_LEFT
-TURN_WEIGHT_RIGHT = Settings.TURN_WEIGHT_RIGHT
-TURN_RANDOMNESS = Settings.TURN_RANDOMNESS
-AVOID_WEIGHT = Settings.AVOID_WEIGHT
-ATTRACT_WEIGHT = Settings.ATTRACT_WEIGHT
-
 @cuda.jit
-def sum_sample_pixels(sx, sy, screen, offsets, rgb):
+def sum_sample_pixels(sx, sy, screen, offsets, rgb, settings):
     sum = 0
     r, g, b = rgb
     c = max(r, g, b)
@@ -43,72 +25,65 @@ def sum_sample_pixels(sx, sy, screen, offsets, rgb):
         spx = sx + x
         spy = sy + y
 
-        if spx > 0 and spy > 0 and spx < SURFACEX and spy < SURFACEY:
+        if spx > 0 and spy > 0 and spx < settings[0] and spy < settings[1]:
             sr, sg, sb = screen[int(spx), int(spy)]
             sc = max(sr, sg, sb)
             
             # If max channel of sampled pixel matches max channel of particle
             if (sc == sr and c == r) or (sc == sb and c == b) or (sc == sg and c == g):
-                sum += ATTRACT_WEIGHT
+                sum += settings[13]
             if (sc == sr and c != r) or (sc == sb and c != b) or (sc == sg and c != g):
-                sum += AVOID_WEIGHT
+                sum += settings[12]
     
     return sum
 
 @cuda.jit
-def update_theta(p, screen, offsets, random_theta):
+def update_theta(p, screen, offsets, random_theta, settings):
     px, py, theta, r, g, b = p
 
     # Sample three points in front of particle
-    sx1 = px + math.cos(theta + SAMP_POS_LEFT) * SAMP_DIST
-    sy1 = py + math.sin(theta + SAMP_POS_LEFT) * SAMP_DIST
+    sx1 = px + math.cos(theta + settings[3]) * settings[5]
+    sy1 = py + math.sin(theta + settings[3]) * settings[5]
 
-    sx2 = px + math.cos(theta) * SAMP_DIST
-    sy2 = py + math.sin(theta) * SAMP_DIST
+    sx2 = px + math.cos(theta) * settings[5]
+    sy2 = py + math.sin(theta) * settings[5]
 
-    sx3 = px + math.cos(theta + SAMP_POS_RIGHT) * SAMP_DIST
-    sy3 = py + math.sin(theta + SAMP_POS_RIGHT) * SAMP_DIST
+    sx3 = px + math.cos(theta + settings[4]) * settings[5]
+    sy3 = py + math.sin(theta + settings[4]) * settings[5]
 
-    s1 = sum_sample_pixels(sx1, sy1, screen, offsets, (r,g,b))
-    s2 = sum_sample_pixels(sx2, sy2, screen, offsets, (r,g,b))
-    s3 = sum_sample_pixels(sx3, sy3, screen, offsets, (r,g,b))
+    s1 = sum_sample_pixels(sx1, sy1, screen, offsets, (r,g,b), settings)
+    s2 = sum_sample_pixels(sx2, sy2, screen, offsets, (r,g,b), settings)
+    s3 = sum_sample_pixels(sx3, sy3, screen, offsets, (r,g,b), settings)
 
     # # Find highest weighted point
     smax = max(s1, s2, s3)
 
-    a, b = -TURN_RANDOMNESS, TURN_RANDOMNESS
+    a, b = -settings[11], settings[11]
     theta += a + (b - a) * random_theta
 
     # Check for tie, otherwise we will bias turning left when samples are equal
     if (smax == s1 and smax == s2) or (smax == s2 and smax == s3) or (smax == s1 and smax == s2):
         return theta
 
-    theta_left = theta + TURN_WEIGHT_LEFT
-    theta_right = theta + TURN_WEIGHT_RIGHT   
+    theta_left = theta + settings[3]
+    theta_right = theta + settings[4]   
 
     # Turn toward highest sampled area
     if s1 == smax:
         return theta_left
     if s3 == smax:
         return theta_right
-    
-    # # Don't go straight if weight for s2 < 0
-    # if s2 < 0:
-    #     if s1 > s3:
-    #         return theta_left
-    #     else:
-    #         return theta_right
         
     return theta
 
 
 @cuda.jit
-def update_pos(p):
+def update_pos(p, settings):
     px, py, theta = p[0], p[1], p[2]
 
     # Find velocity based on current theta, update position by that velocity
-    pvx = math.cos(theta) * VELOCITY
-    pvy = math.sin(theta) * VELOCITY
+    pvx = math.cos(theta) * settings[7]
+    pvy = math.sin(theta) * settings[7]
     
     nx = px + pvx
     ny = py + pvy
@@ -117,23 +92,23 @@ def update_pos(p):
     
     # Particle "bounces" if it reaches edge of screen
     if nx < 1:
-        px = 0
+        px = 2
         pvx = abs(pvx)
         bounced = True
-    elif nx >= SURFACEX:
-        px = SURFACEX - 1
-        pvx = -abs(pvx)
+    elif nx >= settings[0]:
+        px = settings[0] - 2
+        pvx = -abs(pvx) + 0.5
         bounced = True
     else:
         px = nx
     
     if ny < 1:
-        py = 0
+        py = 2
         pvy = abs(pvy)
         bounced = True
-    elif ny >= SURFACEY:
-        py = SURFACEY - 1
-        pvy = -abs(pvy)
+    elif ny >= settings[1]:
+        py = settings[1] - 2
+        pvy = -abs(pvy) + 0.5
         bounced = True
     else:
         py = ny
@@ -145,7 +120,7 @@ def update_pos(p):
     return (px, py, theta)
     
 @cuda.jit
-def particle_pos_kernel(particles, screen, offsets, rng_states, out):
+def particle_pos_kernel(particles, screen, offsets, rng_states, settings, out):
     i = cuda.grid(1)
 
     if i >= particles.shape[0]:
@@ -156,19 +131,20 @@ def particle_pos_kernel(particles, screen, offsets, rng_states, out):
 
     random_theta = random.xoroshiro128p_uniform_float32(rng_states, i)
 
-    p[2] = update_theta(p, screen, offsets, random_theta)
-    px, py, theta = update_pos(p)
+    p[2] = update_theta(p, screen, offsets, random_theta, settings)
+    px, py, theta = update_pos(p, settings)
 
     out[i] = px, py, theta, r, g, b
 
-def compute_particle_pos(particles, screen_pixels):
+def compute_particle_pos(particles, screen_pixels, settings: Settings):
     particles = np.array(particles)
     out = np.zeros_like(particles)
 
     arr_device = cuda.to_device(particles)
     out_device = cuda.device_array(particles.shape)
     screen_pixels_device = cuda.to_device(screen_pixels)
-    offsets_device = cuda.to_device(SAMP_OFFSETS)
+    offsets_device = cuda.to_device(generate_pixel_offsets(settings.SAMPLE_RADIUS))
+    settings_device = cuda.to_device(get_settings_arr(settings))
 
     threads_per_block = 32
     blocks = int(np.ceil(particles.shape[0] / threads_per_block))
@@ -176,7 +152,26 @@ def compute_particle_pos(particles, screen_pixels):
     # RNG states to turn each particle by a small random amount each frame
     rng_states = random.create_xoroshiro128p_states(threads_per_block * blocks, seed=1)
     
-    particle_pos_kernel[blocks, threads_per_block](arr_device, screen_pixels_device, offsets_device, rng_states, out_device)
+    particle_pos_kernel[blocks, threads_per_block](arr_device, screen_pixels_device, offsets_device, rng_states, settings_device, out_device)
     out = out_device.copy_to_host()
     
     return out
+
+def get_settings_arr(settings: Settings):
+    # Yes this is awful, I'm sorry
+    return [
+        settings.SURFACEX,
+        settings.SURFACEY,
+        settings.SAMPLE_ANGLE,
+        -1 * settings.SAMPLE_ANGLE,
+        settings.SAMPLE_ANGLE,
+        settings.SAMPLE_DISTANCE,
+        settings.SAMPLE_RADIUS,
+        settings.VELOCITY,
+        settings.COHESION,
+        settings.TURN_WEIGHT_LEFT,
+        settings.TURN_WEIGHT_RIGHT,
+        settings.TURN_RANDOMNESS,
+        settings.AVOID_WEIGHT,
+        settings.ATTRACT_WEIGHT
+    ]

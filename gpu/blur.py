@@ -2,8 +2,6 @@ import numpy as np
 from numba import cuda
 from settings import Settings
 
-DECAY_SPEED = Settings.DECAY_SPEED
-
 def generate_blur_offsets(size):
     offsets = []
     for x in range(-size, size + 1):
@@ -11,10 +9,8 @@ def generate_blur_offsets(size):
             offsets.append((x, y))
     return offsets
 
-PIXEL_OFFSETS = generate_blur_offsets(1)
-
 @cuda.jit
-def blur_kernel(arr, offsets, out):
+def blur_kernel(arr, offsets, out, decay_speed):
     # Simple box blur
     x, y = cuda.grid(2)
 
@@ -38,16 +34,17 @@ def blur_kernel(arr, offsets, out):
     g_avg = g_sum // t
     b_avg = b_sum // t
     
-    out[x, y, 0] = r_avg - DECAY_SPEED if r_avg > DECAY_SPEED else 0
-    out[x, y, 1] = g_avg - DECAY_SPEED if g_avg > DECAY_SPEED else 0
-    out[x, y, 2] = b_avg - DECAY_SPEED if b_avg > DECAY_SPEED else 0
+    out[x, y, 0] = r_avg - decay_speed if r_avg > decay_speed else 0
+    out[x, y, 1] = g_avg - decay_speed if g_avg > decay_speed else 0
+    out[x, y, 2] = b_avg - decay_speed if b_avg > decay_speed else 0
 
-def blur(arr):
+def blur(arr, settings: Settings):
     arr = np.array(arr, dtype=np.uint8)
     out = np.zeros_like(arr)
+    decay_speed = settings.DECAY_SPEED
 
     arr_device = cuda.to_device(arr)
-    offsets_device = cuda.to_device(PIXEL_OFFSETS)
+    offsets_device = cuda.to_device(generate_blur_offsets(1))
     out_device = cuda.device_array(arr.shape)
 
     threads_per_block = (32, 32)
@@ -55,7 +52,7 @@ def blur(arr):
     blocks_per_grid_y = int(np.ceil(arr.shape[1] / threads_per_block[1]))
     blocks_per_grid = (blocks_per_grid_x, blocks_per_grid_y)
 
-    blur_kernel[blocks_per_grid, threads_per_block](arr_device, offsets_device, out_device)
+    blur_kernel[blocks_per_grid, threads_per_block](arr_device, offsets_device, out_device, decay_speed)
     out = out_device.copy_to_host()
     
     return out

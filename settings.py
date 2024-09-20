@@ -2,69 +2,40 @@ import math
 from random import choice, randint, uniform
 
 class Settings:
-    AGENTS = randint(5000, 50000)
+    def __init__(self):
+        self.AGENTS = 25000
 
-    RED = choice([True, False]), (randint(175, 255), randint(0, 125), randint(0, 125))
-    GREEN = choice([True, False]), (randint(0, 125), randint(175, 255), randint(0, 125))
-    BLUE = choice([True, False]), (randint(0, 125), randint(0, 125), randint(175, 255))
+        self.FULLSCREEN = True
+        self.WINDOWX = 1400
+        self.WINDOWY = 1050
+        self.WINDOW_SIZE = (self.WINDOWX, self.WINDOWY)
 
-    DECAY_SPEED = randint(1, 10)
+        self.SURFACEX = round(self.WINDOWX * 0.9) # Up/downscale factor
+        self.SURFACEY = round(self.WINDOWY * 0.9) # Up/downscale factor
+        self.SURFACE_SIZE = (self.SURFACEX, self.SURFACEY)
+    
+        self.RANDOMIZATION_TIME = 130
 
-    SAMPLE_ANGLE = math.pi / randint(2, 9)
+        self.randomize()
+    
+    def randomize(self):
+        self.RED = choice([True, False]), (randint(175, 255), randint(0, 125), randint(0, 125))
+        self.GREEN = choice([True, False]), (randint(0, 125), randint(175, 255), randint(0, 125))
+        self.BLUE = choice([True, False]), (randint(0, 125), randint(0, 125), randint(175, 255))
 
-    SAMPLE_DISTANCE = randint(2, 35)
-    SAMPLE_RADIUS = randint(2, 10)
+        self.DECAY_SPEED = randint(1, 10)
 
-    ATTRACT_WEIGHT = uniform(-1, 1)
-    AVOID_WEIGHT = uniform(-1, 1)
+        self.SAMPLE_ANGLE = math.pi / randint(2, 9)
 
-    VELOCITY = uniform(0.1, 10)
-    COHESION = uniform(0.7, 2)
-    TURN_RANDOMNESS = uniform(0, 0.5)
+        self.SAMPLE_DISTANCE = randint(2, 35)
+        self.SAMPLE_RADIUS = randint(2, 10)
 
-    TURN_WEIGHT_LEFT = (-1 * SAMPLE_ANGLE * COHESION)
-    TURN_WEIGHT_RIGHT = (SAMPLE_ANGLE * COHESION)
+        self.ATTRACT_WEIGHT = uniform(-1, 1)
+        self.AVOID_WEIGHT = uniform(-1, 1)
 
-    FULLSCREEN = False
-    WINDOWX = 1200
-    WINDOWY = 800
-    WINDOW_SIZE = (WINDOWX, WINDOWY)
+        self.VELOCITY = uniform(0.1, 10)
+        self.COHESION = uniform(0.7, 2)
+        self.TURN_RANDOMNESS = uniform(0, 0.5)
 
-    SURFACEX = round(WINDOWX * 1)
-    SURFACEY = round(WINDOWY * 1)
-    SURFACE_SIZE = (SURFACEX, SURFACEY)
-
-
-# Sample default settings if you'd like to tweak manually :)
-# class Settings: 
-#     AGENTS = 50000
-
-#     RED = True, (175, 0, 125)
-#     GREEN = True, (50, 175, 100)
-#     BLUE = True, (130, 75, 175)
-
-#     DECAY_SPEED = 15
-
-#     SAMPLE_ANGLE = math.pi / 8
-
-#     SAMPLE_DISTANCE = 5
-#     SAMPLE_RADIUS = 5
-
-#     ATTRACT_WEIGHT = 0.3
-#     AVOID_WEIGHT = -0.1
-
-#     VELOCITY = 4
-#     COHESION = 0.8
-#     TURN_RANDOMNESS = 0.2
-
-#     TURN_WEIGHT_LEFT = (-1 * SAMPLE_ANGLE * COHESION)
-#     TURN_WEIGHT_RIGHT = (SAMPLE_ANGLE * COHESION)
-
-#     FULLSCREEN = False
-#     WINDOWX = 1200
-#     WINDOWY = 800
-#     WINDOW_SIZE = (WINDOWX, WINDOWY)
-
-#     SURFACEX = round(WINDOWX * 0.5)
-#     SURFACEY = round(WINDOWY * 0.5)
-#     SURFACE_SIZE = (SURFACEX, SURFACEY)
+        self.TURN_WEIGHT_LEFT = (-1 * self.SAMPLE_ANGLE * self.COHESION)
+        self.TURN_WEIGHT_RIGHT = (self.SAMPLE_ANGLE * self.COHESION)
