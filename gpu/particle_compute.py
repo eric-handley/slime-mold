@@ -34,6 +34,8 @@ def sum_sample_pixels(sx, sy, screen, offsets, rgb, settings):
                 sum += settings[13]
             if (sc == sr and c != r) or (sc == sb and c != b) or (sc == sg and c != g):
                 sum += settings[12]
+        else:
+            sum -= 10 # Avoid areas with out-of-bounds pixels (screen edges)
     
     return sum
 
@@ -92,23 +94,23 @@ def update_pos(p, settings):
     
     # Particle "bounces" if it reaches edge of screen
     if nx < 1:
-        px = 2
+        px = 1
         pvx = abs(pvx)
         bounced = True
     elif nx >= settings[0]:
-        px = settings[0] - 2
-        pvx = -abs(pvx) + 0.5
+        px = settings[0] - 1
+        pvx = -abs(pvx)
         bounced = True
     else:
         px = nx
     
     if ny < 1:
-        py = 2
+        py = 1
         pvy = abs(pvy)
         bounced = True
     elif ny >= settings[1]:
-        py = settings[1] - 2
-        pvy = -abs(pvy) + 0.5
+        py = settings[1] - 1
+        pvy = -abs(pvy)
         bounced = True
     else:
         py = ny
