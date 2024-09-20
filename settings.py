@@ -2,7 +2,7 @@ import math
 from random import choice, randint, uniform
 
 class Settings:
-    AGENTS = 50000
+    AGENTS = randint(5000, 50000)
 
     RED = choice([True, False]), (randint(175, 255), randint(0, 125), randint(0, 125))
     GREEN = choice([True, False]), (randint(0, 125), randint(175, 255), randint(0, 125))
@@ -19,8 +19,8 @@ class Settings:
     AVOID_WEIGHT = uniform(-1, 1)
 
     VELOCITY = uniform(0.1, 10)
-    COHESION = uniform(0.6, 2)
-    TURN_RANDOMNESS = uniform(0.1, 0.6)
+    COHESION = uniform(0.7, 2)
+    TURN_RANDOMNESS = uniform(0, 0.5)
 
     TURN_WEIGHT_LEFT = (-1 * SAMPLE_ANGLE * COHESION)
     TURN_WEIGHT_RIGHT = (SAMPLE_ANGLE * COHESION)
