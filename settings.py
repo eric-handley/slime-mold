@@ -3,15 +3,15 @@ from random import choice, randint, uniform
 
 class Settings:
     def __init__(self):
-        self.AGENTS = 25000
+        self.AGENTS = 35000
 
-        self.FULLSCREEN = True
-        self.WINDOWX = 1400
-        self.WINDOWY = 1050
+        self.FULLSCREEN = False
+        self.WINDOWX = 1200
+        self.WINDOWY = 800
         self.WINDOW_SIZE = (self.WINDOWX, self.WINDOWY)
 
-        self.SURFACEX = round(self.WINDOWX * 0.9) # Up/downscale factor
-        self.SURFACEY = round(self.WINDOWY * 0.9) # Up/downscale factor
+        self.SURFACEX = round(self.WINDOWX * 1) # Up/downscale factor
+        self.SURFACEY = round(self.WINDOWY * 1) # Up/downscale factor
         self.SURFACE_SIZE = (self.SURFACEX, self.SURFACEY)
     
         self.RANDOMIZATION_TIME = 130
@@ -19,6 +19,7 @@ class Settings:
         self.randomize()
     
     def randomize(self):
+        # If you want to manually set constant settings, just set parameters to constants
         self.RED = choice([True, False]), (randint(175, 255), randint(0, 125), randint(0, 125))
         self.GREEN = choice([True, False]), (randint(0, 125), randint(175, 255), randint(0, 125))
         self.BLUE = choice([True, False]), (randint(0, 125), randint(0, 125), randint(175, 255))
